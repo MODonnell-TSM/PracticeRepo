@@ -25,6 +25,17 @@ namespace WebApplication1.Controllers
         {
             cache["customers"] = customers;
         }
+
+        public PartialViewResult Basket()
+        {
+            BasketViewModel model = new BasketViewModel();
+
+            model.BasketCount = 5;
+            model.BasketTotal = "$100";
+
+            return PartialView(model);
+        }
+
         public ActionResult Index()
         {
             return View();
@@ -44,15 +55,18 @@ namespace WebApplication1.Controllers
             return View();
         }
 
-        public ActionResult ViewCustomer(Customer PostedCustomer)
+        public ActionResult ViewCustomer(string id)
         {
-            Customer customer = new Customer();
-
-            customer.Id = Guid.NewGuid().ToString();
-            customer.Name = PostedCustomer.Name;
-            customer.Telephone = PostedCustomer.Telephone;
-
-            return View(customer);
+            Customer customer = customers.FirstOrDefault(c => c.Id == id);
+            if(customer == null)
+            {
+                return HttpNotFound();
+            }
+            else
+            {
+                return View(customer);
+            }
+  
         }
 
         public ActionResult AddCustomer()
@@ -63,11 +77,81 @@ namespace WebApplication1.Controllers
         [HttpPost]
         public ActionResult AddCustomer(Customer customer)
         {
+            if (!ModelState.IsValid)
+            {
+                return View(customer);
+            }
+
             customer.Id = Guid.NewGuid().ToString();
             customers.Add(customer);
             SaveCache();
 
             return RedirectToAction("CustomerList");
+        }
+
+        public ActionResult EditCustomer(string id)
+        {
+            Customer customer = customers.FirstOrDefault(c => c.Id == id);
+            if (customer == null)
+            {
+                return HttpNotFound();
+            }
+            else
+            {
+                return View(customer);
+            }
+
+        }
+
+        [HttpPost]
+        public ActionResult EditCustomer(Customer customer, string Id)
+        {
+            var customerToEdit = customers.FirstOrDefault(c => c.Id == Id);
+
+            if (customer == null)
+            {
+                return HttpNotFound();
+            }
+            else
+            {
+                customerToEdit.Name = customer.Name;
+                customerToEdit.Telephone = customer.Telephone;
+                SaveCache();
+
+                return RedirectToAction("CustomerList");
+            }
+
+        }
+
+        public ActionResult DeleteCustomer(string Id)
+        {
+            Customer customer = customers.FirstOrDefault(c => c.Id == Id);
+            if (customer == null)
+            {
+                return HttpNotFound();
+            }
+            else
+            {
+                return View(customer);
+            }
+
+        }
+
+        [HttpPost]
+        [ActionName("DeleteCustomer")]
+        public ActionResult ConfirmDeleteCustomer(string Id)
+        {
+            Customer customer = customers.FirstOrDefault(c => c.Id == Id);
+            if (customer == null)
+            {
+                return HttpNotFound();
+            }
+            else
+            {
+                customers.Remove(customer);
+                return RedirectToAction("CustomerList");
+            }
+
         }
 
         public ActionResult CustomerList()
